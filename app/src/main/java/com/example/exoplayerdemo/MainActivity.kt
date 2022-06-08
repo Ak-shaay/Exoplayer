@@ -4,11 +4,16 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.example.exoplayerdemo.databinding.ActivityMainBinding
+import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.DefaultRenderersFactory
 import com.google.android.exoplayer2.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
 import com.google.android.exoplayer2.PlaybackPreparer
 import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.drm.DefaultDrmSessionManager
+import com.google.android.exoplayer2.drm.FrameworkMediaDrm
+import com.google.android.exoplayer2.drm.HttpMediaDrmCallback
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
+import com.google.android.exoplayer2.source.dash.DashMediaSource
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
@@ -55,8 +60,14 @@ class MainActivity : AppCompatActivity(),PlaybackPreparer {
 
         val upstreamFactory = DefaultDataSourceFactory(this,buildHttpDataSourceFactory())
 
-        val mediaSource= ProgressiveMediaSource.Factory(upstreamFactory)
-            .createMediaSource(Uri.parse("https://html5demos.com/assets/dizzy.mp4"))
+        val drmCallback = HttpMediaDrmCallback("https://proxy.uat.widevine.com/proxy?video_id=GTS_SW_SECURE_CRYPTO&provider=widevine_test",buildHttpDataSourceFactory())
+        val drmSessionManager = DefaultDrmSessionManager.Builder()
+            .setUuidAndExoMediaDrmProvider(C.WIDEVINE_UUID,FrameworkMediaDrm.DEFAULT_PROVIDER)
+            .build(drmCallback )
+
+        val mediaSource= DashMediaSource.Factory(upstreamFactory)
+            .setDrmSessionManager(drmSessionManager)
+            .createMediaSource(Uri.parse("https://storage.googleapis.com/wvmedia/cenc/h264/tears/tears.mpd"))
         player ?.prepare(mediaSource)
     }
 
